@@ -38,54 +38,56 @@ function include(inputdir, outputdir, options) {
 			return sander.readFile(inputdir, filename).then(function(code){
 				fileContents[ filename ] = code.toString();
 			});
-		}).then(function(){
-
-			console.log('Contents of all files: ', fileContents);
-
+		}).then( function() {
 			return mapSeries( filenames, function ( filename ) {
 
 				var ext = extname( filename );
 				var sourceMap = 'sourceMap' in options ? options.sourceMap : ( ext === '.js' || ext === '.css' );
 				var code = fileContents[filename];
 
-				console.log('gobble-include: ', filename);
+// 				console.log('gobble-include: ', filename);
 				if ( sourceMap ) {
 					/// TODO: Load existing source map, if any.
 					var magicString = new MagicString( code );
 
 					while ( match = pattern.exec( code ) ) {
 						var value = getValue(fileContents, match[1] );
-						console.log('gobble-include: match ', match);
-						console.log('gobble-include: replace value ', value);
 
 						if ( value !== NO_MATCH ) {
 							console.log('Included ', match[1]);
 							includedFiles.push(match[1]);
 
-							magicString.replace( match.index, match.index + match[0].length, value );
+							magicString.overwrite( match.index, match.index + match[0].length, value );
 						}
 					}
 
 					// Write files (source + map)
 					return sander.writeFile( outputdir, filename, magicString.toString()).then(
-						sander.writeFile( outputdir, filename + '.map', magicString.toString())
+						sander.writeFile( outputdir, filename + '.map', magicString.generateMap({ 
+							file: filename + '.map',
+							source: filename,
+							hires: true 
+						}))
 					);
 
 				} else {
 					code = code.replace( pattern, function ( match, $1 ) {
-						console.log('Included ', $1);
+// 						console.log('Included ', $1);
 						includedFiles.push($1);
 						var value = getValue( replacements, $1 );
 						return value !== NO_MATCH ? value : match;
 					});
 					return sander.writeFile( outputdir, filename, code);
 				}
+			}).then( function() {
+				return mapSeries( includedFiles, function ( filename ) {
+
+// 					console.log('Deleting: ', filename);
+					return sander.unlink(outputdir, filename + '.map')
+						.then(function(){return sander.unlink(outputdir, filename)});
+
+				});
 			});
-		}).then(function(){
-
-			console.log('TODO: Must delete: ', includedFiles.join(', '));
-			/// FIXME: Delete included files!!
-
 		});
 	});
 };
