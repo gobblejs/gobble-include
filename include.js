@@ -1,7 +1,8 @@
-var extname = require( 'path' ).extname;
-var MagicString = require( 'magic-string' );
-var sander = require( 'sander' );
-var mapSeries = require( 'promise-map-series' );
+var path    = require('path');
+var extname = require('path').extname;
+var MagicString = require('magic-string');
+var sander = require('sander');
+var mapSeries = require('promise-map-series');
 
 module.exports = include;
 
@@ -44,6 +45,8 @@ function include(inputdir, outputdir, options) {
 				var ext = extname( filename );
 				var sourceMap = 'sourceMap' in options ? options.sourceMap : ( ext === '.js' || ext === '.css' );
 				var code = fileContents[filename];
+				var inputFilename = sander.readlinkSync(path.resolve(inputdir, filename));
+				var outputFilename = path.resolve(outputdir, filename);
 
 // 				console.log('gobble-include: ', filename);
 				if ( sourceMap ) {
@@ -54,20 +57,29 @@ function include(inputdir, outputdir, options) {
 						var value = getValue(fileContents, match[1] );
 
 						if ( value !== NO_MATCH ) {
-							console.log('Included ', match[1]);
+// 							console.log('Included ', match[1]);
 							includedFiles.push(match[1]);
 
 							magicString.overwrite( match.index, match.index + match[0].length, value );
 						}
 					}
 
+					var sourceMapping = '';
+					if (ext === '.css') {
+						sourceMapping = '\n/*# sourceMappingURL=' + outputFilename + '.map */';
+					} else {
+						sourceMapping = '\n//# sourceMappingURL=' + outputFilename + '.map';
+					}
+
 					// Write files (source + map)
-					return sander.writeFile( outputdir, filename, magicString.toString()).then(
-						sander.writeFile( outputdir, filename + '.map', magicString.generateMap({ 
-							file: filename + '.map',
-							source: filename,
-							hires: true 
-						}))
+					return sander.writeFile( outputFilename, magicString.toString() + sourceMapping).then(
+						sander.writeFile( outputFilename + '.map',
+							magicString.generateMap({
+								file: outputFilename,
+								source: inputFilename,
+								hires: true
+							})
+						)
 					);
 
 				} else {
@@ -84,7 +96,7 @@ function include(inputdir, outputdir, options) {
 
 // 					console.log('Deleting: ', filename);
 					return sander.unlink(outputdir, filename + '.map')
-						.then(function(){return sander.unlink(outputdir, filename)});
+						.then(sander.unlink(outputdir, filename));
 
 				});
 			});
