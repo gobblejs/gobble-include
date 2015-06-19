@@ -54,8 +54,9 @@ module.exports = gobble( 'src' ).transform( 'include', {
 `gobble-include` is **naïve**. This means it:
 
 * Ignores double quotes in `include("file")`. The default is single quotes.
+* Doesn't care about language syntax. e.g. `include('file')` doesn't mean anything in raw HTML, but files will still be included because the string matches. Custom delimiters can alleviate this.
 * Doesn't care about multiple levels of included files or dependency graphs. Consider `gobble-browserify` or carefully run `gobble-include` in serial.
-
+* Sourcemaps do not include information about the included files.
 
 ## License
 
