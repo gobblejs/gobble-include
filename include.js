@@ -45,7 +45,11 @@ function include(inputdir, outputdir, options) {
 				var ext = extname( filename );
 				var sourceMap = 'sourceMap' in options ? options.sourceMap : ( ext === '.js' || ext === '.css' );
 				var code = fileContents[filename];
-				var inputFilename = sander.readlinkSync(path.resolve(inputdir, filename));
+				var inputFilename = path.resolve(inputdir, filename);
+				var inputFileStats = sander.lstatSync();
+				if (inputFileStats.isSymbolicLink()) {
+					inputFilename = sander.readlinkSync(inputFilename);
+				}
 				var outputFilename = path.resolve(outputdir, filename);
 
 // 				console.log('gobble-include: ', filename);
@@ -86,7 +90,7 @@ function include(inputdir, outputdir, options) {
 					code = code.replace( pattern, function ( match, $1 ) {
 // 						console.log('Included ', $1);
 						includedFiles.push($1);
-						var value = getValue( replacements, $1 );
+						var value = getValue( fileContents, $1 );
 						return value !== NO_MATCH ? value : match;
 					});
 					return sander.writeFile( outputdir, filename, code);
@@ -95,8 +99,15 @@ function include(inputdir, outputdir, options) {
 				return mapSeries( includedFiles, function ( filename ) {
 
 // 					console.log('Deleting: ', filename);
-					return sander.unlink(outputdir, filename + '.map')
-						.then(sander.unlink(outputdir, filename));
+					if (sander.existsSync(outputdir, filename + '.map')) {
+						sander.unlinkSync(outputdir, filename + '.map');
+					}
+					if (sander.existsSync(outputdir, filename)) {
+						sander.unlinkSync(outputdir, filename);
+					}
+
+// 					return sander.unlink(outputdir, filename + '.map')
+// 						.then(sander.unlink(outputdir, filename));
 
 				});
 			});

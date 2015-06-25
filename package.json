@@ -1,6 +1,6 @@
 {
   "name": "gobble-include",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Gobble plugin to naïvely include some files into other files ",
   "main": "include.js",
   "repository": {
