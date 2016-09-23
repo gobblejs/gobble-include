@@ -11,7 +11,7 @@ var NO_MATCH = {};
 var hasProp = {}.hasOwnProperty;
 function getValue ( obj, key ) {
 	if ( !hasProp.call( obj, key ) ) {
-		return '';
+		return NO_MATCH;
 	}
 	obj = obj[ key ];
 	return obj;
@@ -122,10 +122,3 @@ include.defaults = {
 	accept: 'html svg txt md hbs json cson xml yml js coffee ts css scss sass'.split( ' ' ).map( function ( ext ) { return '.' + ext; })
 //	sourceMap: true | false
 };
-
-
-
-
-
-
-
