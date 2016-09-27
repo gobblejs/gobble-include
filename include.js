@@ -82,8 +82,8 @@ function include(inputdir, outputdir, options) {
 								file: outputFilename,
 								source: inputFilename,
 								hires: true
-							})
-						)
+							}).toString()
+						);
 					});
 
 				} else {
