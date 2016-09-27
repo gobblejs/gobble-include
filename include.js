@@ -76,15 +76,15 @@ function include(inputdir, outputdir, options) {
 					}
 
 					// Write files (source + map)
-					return sander.writeFile( outputFilename, magicString.toString() + sourceMapping).then(
-						sander.writeFile( outputFilename + '.map',
+					return sander.writeFile( outputFilename, magicString.toString() + sourceMapping).then(function() {
+						return sander.writeFile( outputFilename + '.map',
 							magicString.generateMap({
 								file: outputFilename,
 								source: inputFilename,
 								hires: true
 							})
 						)
-					);
+					});
 
 				} else {
 					code = code.replace( pattern, function ( match, $1 ) {
